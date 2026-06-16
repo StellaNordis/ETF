@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Anthropic Test</title>
+</head>
+<body>
+<button id="test">Test</button>
+<pre id="out"></pre>
+<script>
+document.getElementById('test').onclick = async () => {
+  const out = document.getElementById('out');
+  out.textContent = 'läuft...';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'anthropic-version': '2023-06-01',
+        'x-api-key': 'HIER_DEIN_NEUER_KEY',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 50,
+        messages: [{ role: 'user', content: 'Hello, world' }]
+      })
+    });
+
+    const text = await res.text();
+    out.textContent = 'HTTP ' + res.status + '\\n\\n' + text;
+  } catch (e) {
+    out.textContent = 'FEHLER: ' + e.message;
+  }
+};
+</script>
+</body>
+</html>
