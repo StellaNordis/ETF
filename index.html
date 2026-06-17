@@ -5,35 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ETF Finder</title>
   <style>
-    body { font-family: system-ui, -apple-system, Arial, sans-serif; margin: 0; padding: 20px; background:#0b1220; color:#e5e7eb; }
+    :root { --bg:#0b1220; --card:#111827; --line:#243043; --text:#e5e7eb; --muted:#94a3b8; --blue:#2563eb; --gray:#334155; --red:#b91c1c; }
+    * { box-sizing:border-box; }
+    body { margin:0; padding:20px; font-family:system-ui,-apple-system,Arial,sans-serif; background:var(--bg); color:var(--text); }
     .wrap { max-width: 900px; margin: 0 auto; }
-    h1 { margin: 0 0 16px; font-size: 28px; }
-    .card { background:#111827; border:1px solid #243043; border-radius:16px; padding:16px; margin-bottom:16px; }
-    label { display:block; margin: 12px 0 6px; color:#cbd5e1; font-size:14px; }
-    input, textarea, button { width:100%; box-sizing:border-box; border-radius:12px; border:1px solid #334155; background:#0f172a; color:#e5e7eb; padding:12px 14px; font-size:16px; }
-    textarea { min-height: 88px; resize: vertical; }
-    button { cursor:pointer; background:#2563eb; border:none; font-weight:600; margin-top:10px; }
-    button.secondary { background:#334155; }
-    button.danger { background:#b91c1c; }
+    h1 { margin:0 0 8px; font-size: 28px; }
+    p { margin:0 0 16px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:16px; }
+    label { display:block; margin:12px 0 6px; color:#cbd5e1; font-size:14px; }
+    input, textarea, button { width:100%; border-radius:12px; border:1px solid #334155; background:#0f172a; color:var(--text); padding:12px 14px; font-size:16px; }
+    textarea { min-height:88px; resize:vertical; }
+    button { cursor:pointer; border:none; font-weight:600; margin-top:10px; }
+    button.primary { background:var(--blue); }
+    button.secondary { background:var(--gray); }
+    button.danger { background:var(--red); }
     .grid { display:grid; grid-template-columns:1fr; gap:12px; }
     .row { display:grid; grid-template-columns:1fr; gap:12px; }
-    ul { list-style:none; padding:0; margin: 10px 0 0; }
-    li { display:flex; justify-content:space-between; gap:12px; align-items:center; border:1px solid #243043; background:#0f172a; border-radius:12px; padding:10px 12px; margin-top:8px; }
-    .muted { color:#94a3b8; font-size:13px; }
-    .small { font-size:13px; }
-    pre { white-space: pre-wrap; word-break: break-word; background:#0f172a; border:1px solid #243043; border-radius:12px; padding:12px; min-height:64px; }
     .top-actions { display:flex; gap:10px; flex-wrap:wrap; }
     .top-actions button { width:auto; padding:10px 14px; }
-    @media (min-width: 760px) {
-      .grid { grid-template-columns: 1fr 1fr; }
-      .row { grid-template-columns: 1fr 1fr; }
-    }
+    ul { list-style:none; padding:0; margin:10px 0 0; }
+    li { display:flex; justify-content:space-between; gap:12px; align-items:center; border:1px solid var(--line); background:#0f172a; border-radius:12px; padding:10px 12px; margin-top:8px; }
+    .muted { color:var(--muted); font-size:13px; }
+    .small { font-size:13px; }
+    pre { white-space:pre-wrap; word-break:break-word; background:#0f172a; border:1px solid var(--line); border-radius:12px; padding:12px; min-height:64px; }
+    @media (min-width: 760px) { .grid, .row { grid-template-columns:1fr 1fr; } }
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>ETF Finder</h1>
-    <p class="muted">ETF-/Anteilsdaten bleiben frei einfügbar. Website-URLs werden dauerhaft im Browser gespeichert und bei jedem Laden wieder angezeigt.</p>
+    <p class="muted">ETF-/Anteilsdaten bleiben frei einfügbar. Website-URLs werden dauerhaft im Browser gespeichert und serverseitig geprüft.</p>
 
     <div class="card">
       <div class="grid">
@@ -52,12 +53,12 @@
           <input id="websiteInput" type="url" placeholder="https://example.com/ausschüttung" />
         </div>
         <div style="display:flex; align-items:end; gap:10px;">
-          <button id="addWebsiteBtn">Website speichern</button>
+          <button id="addWebsiteBtn" class="primary">Website speichern</button>
         </div>
       </div>
 
       <div class="top-actions" style="margin-top:12px;">
-        <button id="buildBtn">Prüfung bauen</button>
+        <button id="buildBtn" class="primary">Prüfung bauen</button>
         <button id="loadDemoBtn" class="secondary">Demo-Daten einfügen</button>
         <button id="clearAllBtn" class="danger">Alles löschen</button>
       </div>
@@ -77,7 +78,6 @@
 
   <script>
     const STORAGE_KEY = 'etf_sites_v1';
-
     const etfInput = document.getElementById('etfInput');
     const sharesInput = document.getElementById('sharesInput');
     const websiteInput = document.getElementById('websiteInput');
@@ -152,21 +152,30 @@
         'ETF:\\n' + (etfText || '(leer)') + '\\n\\n' +
         'Anteile:\\n' + (sharesText || '(leer)') + '\\n\\n' +
         'Websites:\\n' + (sites.length ? sites.map(s => '- ' + s).join('\\n') : '(keine gespeichert)') + '\\n\\n' +
-        'Hinweis:\\nDiese Version speichert URLs nur lokal im Browser.';
+        'Prüfung läuft...';
 
       if (!sites.length) return;
 
       const results = [];
       for (const site of sites) {
         try {
-          const res = await fetch(site, { method: 'GET', mode: 'cors' });
-          results.push(`${site} -> ${res.ok ? 'OK (' + res.status + ')' : 'Fehler (' + res.status + ')'}`);
+          const res = await fetch('/api/check', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: site })
+          });
+          const data = await res.json();
+          results.push(
+            `${site} -> ${data.ok ? 'OK' : 'Fehler'} (${data.status || 'n/a'})` +
+            `${data.title ? ' | ' + data.title : ''}` +
+            `${data.keywords?.length ? ' | Treffer: ' + data.keywords.join(', ') : ''}`
+          );
         } catch (e) {
-          results.push(`${site} -> nicht direkt abrufbar im Browser`);
+          results.push(`${site} -> API-Fehler`);
         }
       }
 
-      out.textContent += '\\n\\nPrüfung:\\n' + results.join('\\n');
+      out.textContent += '\\n\\nErgebnis:\\n' + results.join('\\n');
     }
 
     document.getElementById('addWebsiteBtn').addEventListener('click', () => {
